@@ -2,7 +2,7 @@
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>You're invited</title>
-<meta name="robots" content="noindex">
+<meta name="description" content="Wedding invitation websites with RSVP, made by the couple in minutes. Guests open one link: countdown, schedule, map and reply by WhatsApp or email.">
 <meta property="og:title" content="You're invited">
 <meta property="og:description" content="Tap to see our wedding details and reply.">
 <meta property="og:image" content="https://evermoreinvite.com/og.jpg">
@@ -49,16 +49,34 @@
 .ev form.rsvp button{display:block;margin:20px auto 0}
 .ev form.rsvp{text-align:left;max-width:380px;margin:10px auto 0}
 .ev form.rsvp label{display:block;font-weight:500;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--soft);margin:14px 0 6px}
-.ev form.rsvp input,.ev form.rsvp select,.ev form.rsvp textarea{width:100%;padding:11px 12px;border:1px solid var(--line);background:#fff;font:300 15px "Jost",sans-serif;color:var(--ink);border-radius:0}
+.ev form.rsvp input,.ev form.rsvp select,.ev form.rsvp textarea{width:100%;padding:11px 12px;border:1px solid #8F7C4A;background:#fff;font:300 15px "Jost",sans-serif;color:var(--ink);border-radius:0}
 .ev form.rsvp .row{display:flex;gap:10px}
 .ev form.rsvp .row>*{flex:1}
 .ev .by{font-size:13px;color:var(--soft)}
 .ev .foot{text-align:center;margin-top:26px;font-family:"Marcellus",serif;font-size:18px;color:var(--gold)}
 .ev .small{font-size:12px;color:var(--soft)}
 .ev .hidden{display:none}
+.ev .alt{text-align:center;margin-top:12px}
+.ev .alt .link{display:inline-block;margin:6px 10px;font-size:13px;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.ev .count div{border-color:#B9A26A}
+.ev a:focus-visible,.ev button:focus-visible,.ev input:focus-visible,.ev select:focus-visible,.ev textarea:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.ev h1.lg{font-size:36px}
+.ev h1.xl{font-size:29px}
 
 html,body{margin:0;background:#FBF8F1}
 .ev .msgbox{max-width:420px;margin:80px auto;text-align:center;padding:0 16px}
+.ev .land{max-width:620px;margin:0 auto;padding:28px 16px 48px;text-align:center}
+.ev .land h1{font-size:40px;line-height:1.12;margin:6px 0 0}
+.ev .land .lead{font-size:16px}
+.ev .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:26px 0 0;text-align:left}
+.ev .steps div{background:var(--paper);border:1px solid var(--line);padding:16px 14px}
+.ev .steps b{display:block;font-family:"Marcellus",serif;font-weight:400;font-size:18px;margin-bottom:4px;color:var(--ink)}
+.ev .steps span{font-size:13px;color:var(--soft)}
+.ev .feat{list-style:none;padding:0;margin:8px auto 0;max-width:440px;text-align:left}
+.ev .feat li{padding:9px 0 9px 22px;border-bottom:1px solid #EFE7D6;font-size:14px;position:relative}
+.ev .feat li:before{content:"";position:absolute;left:4px;top:16px;width:6px;height:6px;border:1px solid var(--gold);transform:rotate(45deg)}
+.ev .feat li:last-child{border-bottom:0}
+@media(max-width:560px){.ev .steps{grid-template-columns:1fr}.ev .land h1{font-size:32px}}
 </style></head>
 <body><main id="app" class="ev"><div class="msgbox"><p class="eyebrow">Opening your invitation…</p></div></main>
 <script>/* Evermore Invitation Website — shared code (encode, decode, render). All text rendered with textContent. */
@@ -86,32 +104,36 @@ var EV = (function(){
   function initials(a,b){var x=(a||'').trim().charAt(0).toUpperCase(),y=(b||'').trim().charAt(0).toUpperCase();return x&&y?x+'&'+y:(x||y||'');}
   function pad(n){return (n<10?'0':'')+n;}
   function icsDate(dt){return dt.getFullYear()+pad(dt.getMonth()+1)+pad(dt.getDate())+'T'+pad(dt.getHours())+pad(dt.getMinutes())+'00';}
+  function tzOffset(ms,tz){try{var f=new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});var p={};f.formatToParts(new Date(ms)).forEach(function(x){p[x.type]=x.value;});return Date.UTC(+p.year,+p.month-1,+p.day,+p.hour%24,+p.minute,+p.second)-ms;}catch(e){return null;}}
+  /* the wedding moment as a real instant: wall time in the venue's time zone (falls back to the guest's own clock if no zone) */
+  function instant(d,t,tz){var dt=parseDate(d,t);if(!dt)return null;if(!tz)return dt;var g=Date.UTC(dt.getFullYear(),dt.getMonth(),dt.getDate(),dt.getHours(),dt.getMinutes());var o=tzOffset(g,tz);if(o===null)return dt;var u=g-o,o2=tzOffset(u,tz);if(o2!==null&&o2!==o)u=g-o2;return new Date(u);}
+  function utcStamp(dt){return dt.getUTCFullYear()+pad(dt.getUTCMonth()+1)+pad(dt.getUTCDate())+'T'+pad(dt.getUTCHours())+pad(dt.getUTCMinutes())+'00Z';}
   function icsEsc(s){return String(s||'').replace(/[\\,;]/g,function(c){return '\\'+c;}).replace(/\n/g,'\\n');}
 
   function render(d,root,opts){
     opts=opts||{};root.innerHTML='';root.classList.add('ev');
     var w=el('div','wrap');root.appendChild(w);
-    var n1=d.n1||'',n2=d.n2||'',dt=parseDate(d.d,d.t);
+    var n1=d.n1||'',n2=d.n2||'',dt=parseDate(d.d,d.t),at=instant(d.d,d.t,d.tz);
     // HERO
     var c=el('section','card');w.appendChild(c);
     if(d.mono!=='0'){c.appendChild(el('div','mono',d.mi||initials(n1,n2)));}
     c.appendChild(el('p','eyebrow',d.ey||'Together with their families'));
-    var h=el('h1');h.appendChild(document.createTextNode(n1||'Name'));h.appendChild(el('span','amp','&'));h.appendChild(document.createTextNode(n2||'Name'));c.appendChild(h);
+    var h=el('h1',Math.max(n1.length,n2.length)>22?'xl':Math.max(n1.length,n2.length)>12?'lg':null);h.appendChild(document.createTextNode(n1||'Name'));h.appendChild(el('span','amp','&'));h.appendChild(document.createTextNode(n2||'Name'));c.appendChild(h);
     c.appendChild(el('p','lead',d.msg||'invite you to celebrate their wedding'));
-    if(dt){c.appendChild(el('div','date',fmtDate(dt)));if(d.t)c.appendChild(el('div','city','at '+fmtTime(d.t)));}
+    if(dt){c.appendChild(el('div','date',fmtDate(dt)));if(d.t)c.appendChild(el('div','city','at '+fmtTime(d.t)+(d.tz?' local time':'')));}
     if(d.city)c.appendChild(el('div','city',d.city));
     // COUNTDOWN
     if(dt){var cc=el('section','card');w.appendChild(cc);cc.appendChild(el('p','eyebrow','Counting down'));var box=el('div','count');cc.appendChild(box);
       var parts=[['days','Days'],['hrs','Hours'],['min','Minutes']].map(function(p){var x=el('div');var b=el('b',null,'0');x.appendChild(b);x.appendChild(el('span',null,p[1]));box.appendChild(x);return b;});
       var msgEl=el('p','lead');cc.appendChild(msgEl);
-      function tick(){var ms=dt-new Date();if(ms<=0){box.classList.add('hidden');msgEl.textContent=ms>-86400000?'Today is the day.':'Thank you for celebrating with us.';return;}
+      function tick(){var ms=at-new Date();if(ms<=0){box.classList.add('hidden');msgEl.textContent=ms>-86400000?'Today is the day.':'Thank you for celebrating with us.';return;}
         var mins=Math.floor(ms/60000);parts[0].textContent=Math.floor(mins/1440);parts[1].textContent=Math.floor(mins%1440/60);parts[2].textContent=mins%60;}
       tick();if(!opts.preview){setInterval(tick,30000);}
       // calendar buttons
-      var end=new Date(dt.getTime()+6*3600000),title=(n1&&n2?n1+' & '+n2+' — Wedding':'Wedding');
-      var gq='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(title)+'&dates='+icsDate(dt)+'/'+icsDate(end)+'&location='+encodeURIComponent([d.venue,d.addr].filter(Boolean).join(', '));
+      var end=new Date(at.getTime()+6*3600000),stamp=d.tz?utcStamp:icsDate,title=(n1&&n2?n1+' & '+n2+' — Wedding':'Wedding');
+      var gq='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(title)+'&dates='+stamp(at)+'/'+stamp(end)+'&location='+encodeURIComponent([d.venue,d.addr].filter(Boolean).join(', '));
       var a1=el('a','btn','Google Calendar');a1.href=gq;a1.target='_blank';a1.rel='noopener';cc.appendChild(a1);
-      var ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Evermore//Invite//EN\r\nBEGIN:VEVENT\r\nUID:'+icsDate(dt)+'-'+Math.random().toString(36).slice(2)+'@invite\r\nDTSTAMP:'+icsDate(new Date())+'\r\nDTSTART:'+icsDate(dt)+'\r\nDTEND:'+icsDate(end)+'\r\nSUMMARY:'+icsEsc(title)+'\r\nLOCATION:'+icsEsc([d.venue,d.addr].filter(Boolean).join(', '))+'\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n';
+      var ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Evermore//Invite//EN\r\nBEGIN:VEVENT\r\nUID:'+utcStamp(at)+'-'+Math.random().toString(36).slice(2)+'@invite\r\nDTSTAMP:'+utcStamp(new Date())+'\r\nDTSTART:'+stamp(at)+'\r\nDTEND:'+stamp(end)+'\r\nSUMMARY:'+icsEsc(title)+'\r\nLOCATION:'+icsEsc([d.venue,d.addr].filter(Boolean).join(', '))+'\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n';
       var a2=el('a','btn','Apple / Outlook');a2.href='data:text/calendar;charset=utf-8,'+encodeURIComponent(ics);a2.download='wedding.ics';cc.appendChild(a2);
     }
     // SCHEDULE
@@ -125,23 +147,35 @@ var EV = (function(){
       var mb=el('a','btn','Open map');mb.href=map;mb.target='_blank';mb.rel='noopener';vc.appendChild(mb);}
     // RSVP
     if(d.rm&&d.rm!=='none'){var rc=el('section','card');w.appendChild(rc);rc.appendChild(el('p','eyebrow','Kindly reply'));rc.appendChild(el('h2',null,'RSVP'));
-      if(d.rb){var rbd=parseDate(d.rb);rc.appendChild(el('p','by','Please reply by '+(rbd?fmtDate(rbd):d.rb)));}
+      if(d.rb){var rbd=parseDate(d.rb);rc.appendChild(el('p','by','Please reply by '+(rbd?fmtDate(rbd):d.rb)));if(rbd&&!opts.preview&&new Date()>new Date(rbd.getTime()+86400000))rc.appendChild(el('p','by','The reply date has passed. You can still send a message to the couple.'));}
       if(d.rm==='form'){var fu=safeUrl(d.fu);if(fu){var fb=el('a','btn solid','Reply here');fb.href=fu;fb.target='_blank';fb.rel='noopener';rc.appendChild(fb);}}
       else{var f=el('form','rsvp');rc.appendChild(f);
-        function field(lbl,node){var l=el('label',null,lbl);f.appendChild(l);f.appendChild(node);return node;}
-        var nm=field('Your name(s)',el('input'));nm.required=true;nm.maxLength=120;
-        var row=el('div','row');var att=el('select');[['yes','Joyfully accepts'],['no','Regretfully declines']].forEach(function(o){var op=el('option',null,o[1]);op.value=o[0];att.appendChild(op);});
-        var gs=el('input');gs.type='number';gs.min='1';gs.max='20';gs.value='1';
-        var c1=el('div');c1.appendChild(el('label',null,'Attending'));c1.appendChild(att);var c2=el('div');c2.appendChild(el('label',null,'Guests'));c2.appendChild(gs);row.appendChild(c1);row.appendChild(c2);f.appendChild(row);
-        var meal=null;if(d.ml){meal=field(d.ml,el('input'));meal.maxLength=200;}
+        function field(lbl,node,parent){var l=el('label',null,lbl);(parent||f).appendChild(l);(parent||f).appendChild(node);return node;}
+        var nm=field('Your name',el('input'));nm.required=true;nm.maxLength=120;nm.autocomplete='name';
+        var att=el('select');[['yes','Joyfully accepts'],['no','Regretfully declines']].forEach(function(o){var op=el('option',null,o[1]);op.value=o[0];att.appendChild(op);});field('Will you attend?',att);
+        var yesBox=el('div');f.appendChild(yesBox);
+        var gs=el('input');gs.type='number';gs.min='1';gs.max='20';gs.value='1';gs.inputMode='numeric';field('Number of guests, including you',gs,yesBox);
+        var gnLbl=el('label',null,'Names of your guests');var gn=el('textarea');gn.rows=2;gn.maxLength=300;gn.placeholder='e.g. Sara Ahmed, Omar Ahmed';yesBox.appendChild(gnLbl);yesBox.appendChild(gn);
+        var diet=null;if(d.df!=='0'){diet=el('input');diet.maxLength=200;diet.placeholder='Vegetarian, allergies, none';field('Dietary needs (optional)',diet,yesBox);}
+        var meal=null;if(d.ml){meal=el('input');meal.maxLength=200;field(d.ml,meal,yesBox);}
+        function sync(){var y=att.value==='yes';yesBox.classList.toggle('hidden',!y);var many=(+gs.value||1)>1;gnLbl.classList.toggle('hidden',!many);gn.classList.toggle('hidden',!many);}
+        att.addEventListener('change',sync);gs.addEventListener('input',sync);sync();
         var note=field('A note for the couple (optional)',el('textarea'));note.rows=3;note.maxLength=500;
-        var sb=el('button','btn solid',d.rm==='wa'?'Send RSVP by WhatsApp':'Send RSVP by email');sb.type='submit';f.appendChild(sb);
-        f.addEventListener('submit',function(ev){ev.preventDefault();if(opts.preview)return;
-          var lines=['RSVP — '+(n1&&n2?n1+' & '+n2:'Wedding'),'Name: '+nm.value,'Attending: '+(att.value==='yes'?'Yes':'No'),'Guests: '+gs.value];
-          if(meal&&meal.value)lines.push((d.ml||'Meal')+': '+meal.value);if(note.value)lines.push('Note: '+note.value);var text=lines.join('\n');
-          if(d.rm==='wa'){var num=(d.wa||'').replace(/[^\d]/g,'');window.open('https://wa.me/'+num+'?text='+encodeURIComponent(text),'_blank');}
-          else{window.location.href='mailto:'+encodeURIComponent((d.em||'').trim())+'?subject='+encodeURIComponent('RSVP — '+nm.value)+'&body='+encodeURIComponent(text);}
-          sb.textContent='Thank you — finish sending in the app that opened';});
+        var useWa=d.rm==='wa';
+        var sb=el('button','btn solid',useWa?'Send RSVP by WhatsApp':'Send RSVP by email');sb.type='submit';f.appendChild(sb);
+        var alt=el('div','alt');f.appendChild(alt);
+        function text(){var y=att.value==='yes';var lines=['RSVP — '+(n1&&n2?n1+' & '+n2:'Wedding'),'Name: '+nm.value.trim(),'Attending: '+(y?'Yes':'No')];
+          if(y){lines.push('Guests: '+(gs.value||'1'));if((+gs.value||1)>1&&gn.value.trim())lines.push('Guest names: '+gn.value.trim());if(diet&&diet.value.trim())lines.push('Dietary needs: '+diet.value.trim());if(meal&&meal.value.trim())lines.push(d.ml+': '+meal.value.trim());}
+          if(note.value.trim())lines.push('Note: '+note.value.trim());return lines.join('\n');}
+        function mail(){var to=(d.em||'').trim();return 'mailto:'+encodeURIComponent(to).replace(/%40/g,'@')+'?subject='+encodeURIComponent('RSVP — '+nm.value.trim())+'&body='+encodeURIComponent(text());}
+        function check(){if(!nm.value.trim()){nm.focus();if(nm.reportValidity)nm.reportValidity();return false;}return true;}
+        if(useWa){
+          if(d.em){var ea=el('a','link','No WhatsApp? Reply by email');ea.href='#';ea.addEventListener('click',function(e){e.preventDefault();if(opts.preview||!check())return;window.location.href=mail();});alt.appendChild(ea);}
+          var cp=el('a','link','Copy my reply');cp.href='#';cp.addEventListener('click',function(e){e.preventDefault();if(opts.preview||!check())return;var t=text();var done=function(){cp.textContent='Copied. Paste it to the couple';};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,function(){window.prompt('Copy your reply:',t);});}else{window.prompt('Copy your reply:',t);}});alt.appendChild(cp);}
+        f.addEventListener('submit',function(ev){ev.preventDefault();if(opts.preview)return;if(d.demo){sb.textContent='Sample only. On your invitation this opens '+(useWa?'WhatsApp':'email');return;}if(!check())return;
+          if(useWa){var num=(d.wa||'').replace(/[^\d]/g,'');window.open('https://wa.me/'+num+'?text='+encodeURIComponent(text()),'_blank');}
+          else{window.location.href=mail();}
+          sb.textContent='Thank you. Finish sending in the app that opened';});
       }}
     // DETAILS
     var info=[['Dress code',d.dc],['Getting there',d.tr],['Where to stay',d.st],['Gifts',d.gt]].filter(function(x){return x[1];});
@@ -150,16 +184,31 @@ var EV = (function(){
       var box2=el('div','info');ic.appendChild(box2);info.forEach(function(x){var p=el('p');p.appendChild(el('b',null,x[0]));p.appendChild(document.createTextNode(x[1]));box2.appendChild(p);});
       if(d.nt){var p2=el('p');p2.appendChild(el('b',null,'A note from us'));p2.appendChild(document.createTextNode(d.nt));box2.appendChild(p2);}
       if(gift){var gb=el('a','btn',d.gl||'Gift registry');gb.href=gift;gb.target='_blank';gb.rel='noopener';ic.appendChild(gb);}}
+    var fq=(d.fq||[]).filter(function(r){return r&&r[0]&&r[1];});
+    if(fq.length){var qc=el('section','card');w.appendChild(qc);qc.appendChild(el('p','eyebrow','Questions'));qc.appendChild(el('h2',null,'FAQ'));var qb=el('div','info');qc.appendChild(qb);fq.forEach(function(r){var p=el('p');p.appendChild(el('b',null,r[0]));p.appendChild(document.createTextNode(r[1]));qb.appendChild(p);});}
     w.appendChild(el('div','foot',d.sig||(initials(n1,n2)?'With love, '+(n1.trim().split(' ')[0]||'')+' & '+(n2.trim().split(' ')[0]||''):'')));
   }
-  return {encode:encode,decode:decode,render:render,parseDate:parseDate};
+  return {encode:encode,decode:decode,render:render,parseDate:parseDate,instant:instant};
 })();
 </script>
 <script>
 (async function(){
   var app=document.getElementById('app'),h=location.hash.slice(1);
-  function fail(){app.innerHTML='';var b=document.createElement('div');b.className='msgbox';var p=document.createElement('p');p.className='eyebrow';p.textContent='This invitation link looks incomplete';var q=document.createElement('p');q.className='lead';q.textContent='Please ask the couple to send the full link again.';b.appendChild(p);b.appendChild(q);app.appendChild(b);}
-  if(!h){fail();return;}
+  function fail(){app.innerHTML='';var b=document.createElement('div');b.className='msgbox';var p=document.createElement('p');p.className='eyebrow';p.textContent='This invitation link looks incomplete';var q=document.createElement('p');q.className='lead';q.textContent='Please ask the couple to send the full link again.';b.appendChild(p);b.appendChild(q);var hm=document.createElement('a');hm.className='btn';hm.href='/';hm.textContent='About these invitations';b.appendChild(hm);app.appendChild(b);}
+  window.addEventListener('hashchange',function(){location.reload();});
+  function E(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x)e.textContent=x;return e;}
+  function landing(){app.innerHTML='';document.title='Wedding Invitation Website with RSVP | Evermore Invite';var L=E('div','land');app.appendChild(L);
+    L.appendChild(E('p','eyebrow','The Evermore Paper Co'));L.appendChild(E('h1',null,'Your wedding invitation, as one beautiful link'));
+    L.appendChild(E('p','lead','Guests tap once to see your date, a live countdown, the order of the day, the venue map and a simple RSVP that comes straight to your WhatsApp or email.'));
+    var a=E('a','btn solid','See a sample invitation');a.href='#zTZLBbtQwEIZfZZQDHNhdkgAF5QJoS2FRUaW2AqHSwySZTay1x8F2dhsQD8Rz8GLMZNGKS2T__mbmz2__zLjIquytI2swW2Rcyu4jOoqyoUk2t76j1FOAg0k9yMoE2KIz1syMi51AhvcmEUx-hOShIUt1QBGO-IHa1nAndCtsmZcvl_nZsihFSCIUL6o8l3Vjkg68xB3B2ju_gE1COyn1Q_R3Y_ADPb32jkSKvUhXoRVjfqtz4BwVjVl1d3dquaZAzrMe3CT4hGF6HGHd40A2u18Id3bkzoPhXYRH0CDj8Oe3_tmt9OxQJjAkCgEbOpa8-ldimCnIYlbLvHqm6oUJMUGL3NB8dL_I9sQjidnPxlqEG3HEmjS2bZhVhGvqDCMU5Tcuy7woQWyzr2vzXwTBCXzQQvlU2RMdRqo9vKEHdIOlVeOdgvUp4-fL2VPbiPL--CdbHxzaFVxYTBB7T1GlOT-LB15pgnonXwh63BMgBO8d1NY3O5CSDz6RhUvsPIycjIVCU216Ldx-n7NfI8MGakm0k_LBjhE802sBrthOYObbmgADActDa-VUH06A-RFhMl5saKabqKRgA4addNMWXykuYBvoJKopdb_XdFdz4K1ceVYVv_4C';L.appendChild(a);
+    var e=E('a','btn','Get the maker on Etsy');e.href='https://www.etsy.com/shop/TheEvermorePaperCo';e.rel='noopener';L.appendChild(e);
+    var st=E('div','steps');L.appendChild(st);[['1 · Type','Open the maker file on your phone or laptop and type your details. You see the invitation as you go.'],['2 · Copy','Copy your link or download a QR code for your save the date.'],['3 · Share','Send it on WhatsApp, email or text. Replies come straight to you.']].forEach(function(x){var d=E('div');d.appendChild(E('b',null,x[0]));d.appendChild(E('span',null,x[1]));st.appendChild(d);});
+    var c=E('section','card');c.style.marginTop='26px';L.appendChild(c);c.appendChild(E('p','eyebrow','What guests see'));c.appendChild(E('h2',null,'Everything in one place'));
+    var ul=E('ul','feat');c.appendChild(ul);['Your names, date and a live countdown in the venue\'s time zone','Add to Google, Apple or Outlook calendar','Order of the day and venue with a map button','RSVP with guest names, dietary needs and a reply-by date','Optional dress code, travel, where to stay, gifts and FAQ'].forEach(function(t){ul.appendChild(E('li',null,t));});
+    var p=E('section','card');L.appendChild(p);p.appendChild(E('p','eyebrow','Private by design'));p.appendChild(E('h2',null,'Your details stay in your link'));
+    p.appendChild(E('p','lead','There is no account and no database. Your wording is packed inside the link itself, so we never store your guest list or replies.'));
+    L.appendChild(E('p','small','Questions? Message us through our Etsy shop. We usually reply within a few hours.'));}
+  if(!h){landing();return;}
   try{var d=await EV.decode(h);EV.render(d,app,{});if(d.n1&&d.n2)document.title=d.n1+' & '+d.n2+' — Wedding';}catch(e){fail();}
 })();
 </script></body></html>
